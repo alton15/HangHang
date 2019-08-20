@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "872966811069",
+    "firebase_url": "https://hanghang-d0cee.firebaseio.com",
+    "project_id": "hanghang-d0cee",
+    "storage_bucket": "hanghang-d0cee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872966811069:android:2a8ff600a4c37ebc",
+        "android_client_info": {
+          "package_name": "com.example.hanghang"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872966811069-mp4alcci30rvqcbkg6bitj6t84llhmaj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hanghang",
+            "certificate_hash": "2cbeea66b8d6f0e800e2acf1ece9c85b896bdd47"
+          }
+        },
+        {
+          "client_id": "872966811069-lr5r6h7ikc791ufsval2tgil7jh2thpa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hanghang",
+            "certificate_hash": "bad6148e0c1eb8739d2d4ae8eae8b15b80affdd9"
+          }
+        },
+        {
+          "client_id": "872966811069-2fjgrbu26l7h1n63leruvffgmts7vt8m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDg7qrPCzDFgLLh-agY-7H0FMpaZUr9UI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872966811069-2fjgrbu26l7h1n63leruvffgmts7vt8m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
