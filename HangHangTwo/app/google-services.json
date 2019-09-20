@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "442220995790",
+    "firebase_url": "https://hanghangtwo.firebaseio.com",
+    "project_id": "hanghangtwo",
+    "storage_bucket": "hanghangtwo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442220995790:android:a0afdcded4ec5b31",
+        "android_client_info": {
+          "package_name": "com.example.hanghangtwo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "442220995790-bs1v1tg0067ah1oe95jhfdld51r8h9k3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hanghangtwo",
+            "certificate_hash": "2cbeea66b8d6f0e800e2acf1ece9c85b896bdd47"
+          }
+        },
+        {
+          "client_id": "442220995790-0m1kk618ma0r6d30283urgf06g1qg85n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOdg_YAM2EELPfSgubuVD0eaB7phA0r1c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "442220995790-0m1kk618ma0r6d30283urgf06g1qg85n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
