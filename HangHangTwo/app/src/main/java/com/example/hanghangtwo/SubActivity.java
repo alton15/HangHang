@@ -17,6 +17,8 @@ public class SubActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
 
+        // 걸린 옷 개수 받아와서 textView로 보여주기
+
         img_find = findViewById(R.id.img_find);
         img_find.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -30,7 +32,7 @@ public class SubActivity extends AppCompatActivity {
         img_hang.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent();
+                Intent intent = new Intent(SubActivity.this, HangActivity.class);
             }
         });
 
