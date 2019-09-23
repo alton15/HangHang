@@ -1,11 +1,14 @@
 package com.example.hanghangtwo;
 
-import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -23,8 +26,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -38,23 +39,32 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class CodyPlusActivity extends AppCompatActivity {
-    // uri 없는거 해결해야함
-    private String[] permissions = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
-    };
-    private static final int MULTIPLE_PERMISSIONS = 101;
+    // 사진 찍기 버튼 uri 없는거 해결해야함
     private static final int PICK_FROM_ALBUM = 1;
     private static final int PICK_FROM_CAMERA = 2;
 
+    private static final int REQUEST_ENABLE_BT = 10; // 블루투스 활성화 상태
+    private BluetoothAdapter bluetoothAdapter; // 블루투스 어댑터
+    private Set<BluetoothDevice> devices; // 블루투스 디바이스 데이터 셋
+    private BluetoothDevice bluetoothDevice; // 블루투스 디바이스
+    private BluetoothSocket bluetoothSocket = null; // 블루투스 소켓
+    private OutputStream outputStream = null; // 블루투스에 데이터를 출력하기 위한 출력 스트림
+
     private File tempFile;
+
+    static byte id = 0;
+    static byte sent_id = 0;
+
+    int pariedDeviceCount;
 
     String Storage_Path = "All_Image_Uploads /";
     String Database_Path = "All_Image_Uploads_Database";
@@ -73,8 +83,21 @@ public class CodyPlusActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cody_plus);
 
-        if (Build.VERSION.SDK_INT >= 23) {
-            checkPermissions();
+        // 블루투스 활성화하기
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        if(bluetoothAdapter == null) { // 디바이스가 블루투스를 지원하지 않을 때
+            Toast.makeText(CodyPlusActivity.this, "디바이스가 블루투스를 지원하지 않습니다.", Toast.LENGTH_SHORT).show();
+        }
+        else { // 디바이스가 블루투스를 지원 할 때
+            if (bluetoothAdapter.isEnabled()) { // 블루투스가 활성화 상태 (기기에 블루투스가 켜져있음)
+                selectBluetoothDevice(); // 블루투스 디바이스 선택 함수 호출
+            } else { // 블루투스가 비 활성화 상태 (기기에 블루투스가 꺼져있음)
+                // 블루투스를 활성화 하기 위한 다이얼로그 출력
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                // 선택한 값이 onActivityResult 함수에서 콜백된다.
+                startActivityForResult(intent, REQUEST_ENABLE_BT);
+            }
         }
 
         findViewById(R.id.btn_gallery).setOnClickListener(new View.OnClickListener() {
@@ -100,6 +123,8 @@ public class CodyPlusActivity extends AppCompatActivity {
         btn_regi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sent_id = id;
+                sendData(id++);
                 UploadImageFileToFirebaseStorage();
             }
         });
@@ -156,6 +181,17 @@ public class CodyPlusActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+
+        switch (requestCode) {
+            case REQUEST_ENABLE_BT :
+                if(requestCode == RESULT_OK) { // '사용'을 눌렀을 때
+                    selectBluetoothDevice(); // 블루투스 디바이스 선택 함수 호출
+                    break;
+                } else { // '취소'를 눌렀을 때
+                    Toast.makeText(CodyPlusActivity.this, "블루투스를 켜지않으면 사용이 불가합니다.", Toast.LENGTH_SHORT).show();
+                }
+        }
+
         if (resultCode != Activity.RESULT_OK) {
             Toast.makeText(this, "취소 되었습니다.", Toast.LENGTH_SHORT).show();
 
@@ -192,6 +228,9 @@ public class CodyPlusActivity extends AppCompatActivity {
             setImage();
         } else if (requestCode == PICK_FROM_CAMERA) {
             setImage();
+            if (data != null) {
+                photoUri = data.getData();
+            }
         }
     }
 
@@ -201,52 +240,6 @@ public class CodyPlusActivity extends AppCompatActivity {
         Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
 
         image_View.setImageBitmap(originalBm);
-    }
-
-    // 권한 요청
-    public boolean checkPermissions() {
-        int result;
-        List<String> permissionList = new ArrayList<>();
-        for (String pm : permissions) {
-            result = ContextCompat.checkSelfPermission(this, pm);
-            if (result != PackageManager.PERMISSION_GRANTED) {
-                permissionList.add(pm);
-            }
-        }
-        if (!permissionList.isEmpty()) {
-            ActivityCompat.requestPermissions(this,
-                    permissionList.toArray(new String[permissionList.size()]),
-                    MULTIPLE_PERMISSIONS);
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case MULTIPLE_PERMISSIONS: {
-                if (grantResults.length > 0) {
-                    for (int i = 0; i < permissions.length; i++) {
-                        if (permissions[i].equals(this.permissions[i])) {
-                            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                                showToast_PermissionDeny();
-                            }
-                        }
-                    }
-                } else {
-                    showToast_PermissionDeny();
-                }
-                return;
-            }
-        }
-    }
-
-    private void showToast_PermissionDeny() {
-        Toast.makeText(getApplicationContext(),
-                "권한 요청에 동의해야 서비스 이용이 가능합니다. 설정에서 권한을 허용해주십시오.",
-                Toast.LENGTH_SHORT).show();
-        finish();
     }
 
     // Creating Method to get the selected image file Extension from File Path URI.
@@ -287,7 +280,7 @@ public class CodyPlusActivity extends AppCompatActivity {
 
                             @SuppressWarnings("VisibleForTests")
                             com.example.hanghangtwo.ImageUploadInfo imageUploadInfo = new com.example.hanghangtwo.ImageUploadInfo(TempImageName,
-                                    taskSnapshot.getMetadata().getReference().getDownloadUrl().toString());
+                                    taskSnapshot.getMetadata().getReference().getDownloadUrl().toString(), sent_id);
 
                             // Getting image upload ID.
                             String ImageUploadId = databaseReference.push().getKey();
@@ -324,5 +317,77 @@ public class CodyPlusActivity extends AppCompatActivity {
             Toast.makeText(CodyPlusActivity.this, "Please Select Image or Add Image Name", Toast.LENGTH_LONG).show();
 
         }
+    }       // DB에 사진 + 이름 + id 보내줘야함, id도 같이 보내게 만들어야함
+
+    public void selectBluetoothDevice() {
+        // 이미 페어링 되어있는 블루투스 기기를 찾습니다.
+        devices = bluetoothAdapter.getBondedDevices();
+        // 페어링 된 디바이스의 크기를 저장
+        pariedDeviceCount = devices.size();
+
+        // 페어링 되어있는 장치가 없는 경우
+        if(pariedDeviceCount == 0) {
+            // 페어링을 하기위한 함수 호출
+        } else {  // 페어링 되어있는 장치가 있는 경우
+            // 디바이스를 선택하기 위한 다이얼로그 생성
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("페어링 되어있는 블루투스 디바이스 목록");
+            // 페어링 된 각각의 디바이스의 이름과 주소를 저장
+            List<String> list = new ArrayList<>();
+            // 모든 디바이스의 이름을 리스트에 추가
+            for(BluetoothDevice bluetoothDevice : devices) {
+                list.add(bluetoothDevice.getName());
+            }
+            list.add("취소");
+            // List를 CharSequence 배열로 변경
+            final CharSequence[] charSequences = list.toArray(new CharSequence[list.size()]);
+            list.toArray(new CharSequence[list.size()]);
+
+            // 해당 아이템을 눌렀을 때 호출 되는 이벤트 리스너
+            builder.setItems(charSequences, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // 해당 디바이스와 연결하는 함수 호출
+                    connectDevice(charSequences[which].toString());
+                }
+            });
+            // 뒤로가기 버튼 누를 때 창이 안닫히도록 설정
+            builder.setCancelable(false);
+            // 다이얼로그 생성
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        }
     }
+
+    public void connectDevice(String deviceName) {
+        // 페어링 된 디바이스들을 모두 탐색
+        for(BluetoothDevice tempDevice : devices) {
+            // 사용자가 선택한 이름과 같은 디바이스로 설정하고 반복문 종료
+            if(deviceName.equals(tempDevice.getName())) {
+                bluetoothDevice = tempDevice;
+                break;
+            }
+        }
+        // UUID 생성
+        UUID uuid = java.util.UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+        // Rfcomm 채널을 통해 블루투스 디바이스와 통신하는 소켓 생성
+        try {
+            bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+            bluetoothSocket.connect();
+            // 데이터 송,수신 스트림을 얻어옵니다.
+            outputStream = bluetoothSocket.getOutputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void sendData(byte b) {
+        try{
+            // 데이터 송신
+            outputStream.write(b);
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
