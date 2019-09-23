@@ -5,14 +5,17 @@ public class ImageUploadInfo {
 
     public String imageURL;
 
+    public int imageId;
+
     public ImageUploadInfo() {
 
     }
 
-    public ImageUploadInfo(String name, String url) {
+    public ImageUploadInfo(String name, String url, int id) {
 
         this.imageName = name;
-        this.imageURL= url;
+        this.imageURL = url;
+        this.imageId = id;
     }
 
     public String getImageName() {
@@ -21,5 +24,9 @@ public class ImageUploadInfo {
 
     public String getImageURL() {
         return imageURL;
+    }
+
+    public int getImageId() {
+        return imageId;
     }
 }
